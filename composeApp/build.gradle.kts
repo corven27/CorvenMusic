@@ -1,57 +1,69 @@
-// ... (mantené los plugins y configuraciones iniciales igual hasta llegar a la sección 'android')
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-android {
-    // ... (mantené tus funciones de propertyOrEmpty)
-
-    defaultConfig {
-        applicationId = "com.corven.music" // El nuevo DNI de tu app
-        minSdk = 21
-        targetSdk = 35
-        versionCode = 90 // Aumentado para que el celu lo vea como nuevo
-        versionName = "1.0.Corven" // Tu versión inicial
-        
-        // ... (mantené todo lo de INIT ENVIRONMENT igual)
-    }
-
-    // ... (mantené splits y namespace igual)
-
-    buildTypes {
-        debug {
-            applicationIdSuffix = ".debug"
-            manifestPlaceholders["appName"] = "CorvenMusic-Debug"
-        }
-
-        release {
-            vcsInfo.include = false
-            isMinifyEnabled = true
-            isShrinkResources = true
-            manifestPlaceholders["appName"] = "CorvenMusic" // AQUÍ CAMBIAMOS EL NOMBRE
-            signingConfig = signingConfigs.getByName("debug")
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-
-    applicationVariants.all {
-        val variant = this
-        variant.outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-            .forEach { output ->
-                val outputFileName = "corvenmusic-${variant.baseName}.apk" // NOMBRE DEL ARCHIVO GENERADO
-                output.outputFileName = outputFileName
-            }
-    }
-
-    flavorDimensions += "version"
-    productFlavors {
-        create("full") {
-            dimension = "version"
-            manifestPlaceholders["appName"] = "CorvenMusic" // NOMBRE PARA LA VERSIÓN FULL
-        }
-        create("accrescent") {
-            dimension = "version"
-            manifestPlaceholders["appName"] = "CorvenMusic-Acc" // NOMBRE PARA LA VERSIÓN ACC
-        }
-    }
-    
-    // ... (seguí con el resto del archivo igual)
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.ksp)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.room)
+    alias(libs.plugins.hilt)
 }
+
+repositories {
+    google()
+    mavenCentral()
+    maven { url = uri("https://jitpack.io") }
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+}
+
+kotlin {
+    androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            freeCompilerArgs.add("-Xcontext-receivers")
+        }
+    }
+
+    jvm("desktop")
+
+    sourceSets {
+        all {
+            languageSettings {
+                optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
+            }
+        }
+
+        val desktopMain by getting
+        desktopMain.dependencies {
+            implementation(compose.components.resources)
+            implementation(compose.desktop.currentOs)
+            implementation(libs.material.icon.desktop)
+            implementation(libs.vlcj)
+            implementation(libs.coil.network.okhttp)
+            runtimeOnly(libs.kotlinx.coroutines.swing)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.navigation)
+            implementation(libs.media3.session)
+            implementation(libs.media3.ui)
+            implementation(libs.kotlin.coroutines.guava)
+            implementation(libs.kotlin.concurrent.futures)
+            implementation(libs.newpipe.extractor)
+            implementation(libs.nanojson)
+            implementation(libs.androidx.webkit)
+            implementation(libs.room.backup)
+        }
+
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+            implementation(compose.components.resources)
+            implementation(compose.components.uiTool
